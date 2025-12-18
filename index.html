@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Pump Track Timer</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { margin:0; font-family:system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#16181d; color:#f9fafb; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+    header { text-align:center; padding:1.25rem 1rem 0.75rem; }
+    header h1 { margin:0; font-size:1.7rem; font-weight:600; letter-spacing:0.4px; color:#f3f4f6; }
+    .buttons { flex:1; display:flex; flex-direction:column; gap:0.85rem; padding:1rem; }
+    button { width:100%; border:none; font-size:1.35rem; font-weight:600; color:#f3f4f6; background:#2a2d33; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:0.6rem; touch-action:manipulation; box-shadow:0 6px 14px rgba(0,0,0,0.35); }
+    .btn-big { flex:1; border-radius:22px; }
+    .begin { background:#3a3f46; font-size:1.45rem; }
+    .leaderboard { background:#30343a; }
+    .settings { flex:0.5; font-size:1.05rem; background:#24272d; box-shadow:none; opacity:0.9; border-radius:22px; }
+    button:active { transform:scale(0.985); background:#40454d; }
+    .leaderboard-view, .session-view { position:fixed; inset:0; background:#16181d; opacity:0; pointer-events:none; transform:scale(1.05); transition:opacity 0.45s ease, transform 0.45s ease; display:flex; flex-direction:column; }
+    .leaderboard-view.active, .session-view.active { opacity:1; pointer-events:auto; transform:scale(1); }
+    .leaderboard-header { text-align:center; padding:1.6rem 1rem 0.8rem; font-size:1.6rem; font-weight:600; color:#9ca3af; }
+    .back-btn { position:fixed; top:0.75rem; left:0.75rem; min-width:48px; min-height:48px; border-radius:10px; background:#24272d; border:none; color:#f3f4f6; font-size:1.3rem; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(0,0,0,0.4); z-index:10; }
+    .leaderboard-grid { display:grid; grid-template-columns:1fr 3fr; padding:0 1rem 1rem; row-gap:0.6rem; column-gap:1rem; font-size:1.05rem; overflow-y:auto; flex:1; }
+    .leaderboard-grid div { padding:0.55rem 0.6rem; background:#24272d; border-radius:10px; }
+    .grid-header { font-weight:600; color:#d1d5db; background:transparent !important; border-bottom:1px solid #2a2d33; }
+    .session-view button { border-radius:0px; }
+    .seven-seg { font-family:"Courier New", monospace; font-size:4.2rem; letter-spacing:0.2rem; color:#e5e7eb; background:#111318; padding:1rem 1.2rem; border-radius:8px; box-shadow:inset 0 0 18px rgba(0,0,0,0.7); text-align:center; margin:auto; flex:0 0 auto; }
+    .segment-btn { background:#1f2228; font-family:"Courier New", monospace; letter-spacing:0.08rem; border-radius:0px; }
+    .session-text { font-size:2rem; text-align:center; margin-top:auto; margin-bottom:auto; color:#f3f4f6; }
+    .final-label { font-size:2rem; text-align:center; margin-top:0.5rem; margin-bottom:auto; color:#f3f4f6; }
+    #sessionActions { margin-top:auto; margin-bottom:2rem; display:flex; flex-direction:column; gap:0.8rem; }
+    #nameEntryContainer { max-height:0; overflow:hidden; transition:max-height 0.4s ease; }
+    #nameEntryContainer input { width:100%; padding:0.6rem; font-size:1rem; border-radius:6px; border:none; margin-top:0.4rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pump Track Timer</h1>
+  </header>
+  <div class="buttons">
+    <button class="btn-big begin" id="armBtn">⏱ Start Session</button>
+    <button class="btn-big leaderboard">Leaderboard</button>
+    <button class="settings"><span>⚙️</span> Settings</button>
+  </div>
+  <div class="leaderboard-view" id="leaderboardView">
+    <button class="back-btn" id="backBtn">←</button>
+    <div class="leaderboard-header">Leaderboard</div>
+    <div class="leaderboard-grid" id="leaderboardGrid">
+      <div class="grid-header">Name</div>
+      <div class="grid-header">Time</div>
+      <div>Rider 1</div><div>00:42.31</div>
+      <div>Rider 2</div><div>00:43.02</div>
+      <div>Rider 3</div><div>00:44.88</div>
+      <div>Rider 4</div><div>00:45.10</div>
+      <div>Rider 5</div><div>00:46.55</div>
+      <div>Rider 6</div><div>00:47.03</div>
+      <div>Rider 7</div><div>00:47.89</div>
+      <div>Rider 8</div><div>00:48.22</div>
+      <div>Rider 9</div><div>00:49.01</div>
+      <div>Rider 10</div><div>00:49.76</div>
+      <div>Rider 11</div><div>00:50.12</div>
+      <div>Rider 12</div><div>00:50.89</div>
+      <div>Rider 13</div><div>00:51.34</div>
+      <div>Rider 14</div><div>00:52.07</div>
+      <div>Rider 15</div><div>00:52.88</div>
+      <div>Rider 16</div><div>00:53.41</div>
+      <div>Rider 17</div><div>00:54.19</div>
+      <div>Rider 18</div><div>00:54.90</div>
+      <div>Rider 19</div><div>00:55.66</div>
+      <div>Rider 20</div><div>00:56.23</div>
+    </div>
+  </div>
+  <div class="session-view" id="sessionView">
+    <button class="back-btn" id="sessionBack">←</button>
+    <div id="sessionText" class="session-text">Waiting for rider</div>
+    <div id="finalLabel" class="final-label" style="display:none;">Final Time</div>
+    <div id="timerDisplay" class="seven-seg">00:00.00</div>
+    <div id="sessionActions">
+      <button class="segment-btn" id="enterName">Enter name for leaderboard</button>
+      <div id="nameEntryContainer">
+        <input type="text" id="riderNameInput" placeholder="Enter your name" />
+        <button class="segment-btn" id="submitName">Submit</button>
+      </div>
+      <button class="segment-btn" id="nextRider">Reset for next rider</button>
+    </div>
+  </div>
+  <script>
+    const leaderboardBtn = document.querySelector('.leaderboard');
+    const leaderboardView = document.getElementById('leaderboardView');
+    const sessionView = document.getElementById('sessionView');
+    const armBtn = document.getElementById('armBtn');
+    const backBtn = document.getElementById('backBtn');
+    const sessionBack = document.getElementById('sessionBack');
+    const sessionText = document.getElementById('sessionText');
+    const finalLabel = document.getElementById('finalLabel');
+    const timerDisplay = document.getElementById('timerDisplay');
+    const sessionActions = document.getElementById('sessionActions');
+    const nextRiderBtn = document.getElementById('nextRider');
+    const enterNameBtn = document.getElementById('enterName');
+    const nameEntryContainer = document.getElementById('nameEntryContainer');
+    const riderNameInput = document.getElementById('riderNameInput');
+    const submitNameBtn = document.getElementById('submitName');
+    const leaderboardGrid = document.getElementById('leaderboardGrid');
+
+    let roughStart = null;
+    let roughInterval = null;
+    let lastTime = null;
+
+    leaderboardBtn?.addEventListener('click', () => { leaderboardView?.classList.add('active'); });
+    backBtn?.addEventListener('click', () => { leaderboardView?.classList.remove('active'); });
+
+    armBtn?.addEventListener('click', () => {
+      if(sessionView){
+        sessionView.classList.add('active');
+        sessionText && (sessionText.style.display = 'block');
+        finalLabel && (finalLabel.style.display = 'none');
+        timerDisplay && (timerDisplay.textContent = '00:00.00');
+        sessionActions && (sessionActions.style.display = 'none');
+
+        setTimeout(() => { simulateBeamStart(); }, 3000);
+      }
+    });
+
+    sessionBack?.addEventListener('click', () => { sessionView?.classList.remove('active'); clearInterval(roughInterval); });
+
+    function simulateBeamStart() {
+      sessionText && (sessionText.style.display = 'none');
+      roughStart = Date.now();
+      roughInterval = setInterval(() => {
+        const elapsed = Date.now() - roughStart;
+        timerDisplay && (timerDisplay.textContent = formatTime(elapsed));
+      }, 50);
+
+      const finishDelay = 6000 + Math.random() * 4000;
+      setTimeout(simulateBeamEnd, finishDelay);
+    }
+
+    function simulateBeamEnd() {
+      clearInterval(roughInterval);
+      lastTime = timerDisplay.textContent;
+      finalLabel && (finalLabel.style.display = 'block');
+      if(timerDisplay) timerDisplay.style.animation = 'flash 0.3s alternate 6';
+      sessionActions && (sessionActions.style.display = 'flex');
+    }
+
+    nextRiderBtn?.addEventListener('click', () => { sessionView?.classList.remove('active'); });
+
+    enterNameBtn?.addEventListener('click', () => { nameEntryContainer.style.maxHeight = nameEntryContainer.scrollHeight + 'px'; });
+
+    submitNameBtn?.addEventListener('click', () => {
+      const name = riderNameInput.value.trim();
+      if(name && lastTime){
+        addToLeaderboard(name, lastTime);
+        riderNameInput.value = '';
+        nameEntryContainer.style.maxHeight = '0';
+      }
+    });
+
+    function addToLeaderboard(name, time){
+      // Check if name already exists
+      const entries = [];
+      for(let i=2; i<leaderboardGrid.children.length; i+=2){
+        entries.push({name: leaderboardGrid.children[i].textContent, time: leaderboardGrid.children[i+1].textContent});
+      }
+      const existing = entries.find(e => e.name === name);
+      if(existing){
+        // Keep the fastest time
+        const oldTime = parseFloat(existing.time.replace(':','.'));
+        const newTime = parseFloat(time.replace(':','.'));
+        if(newTime < oldTime){ existing.time = time; }
+      } else {
+        entries.push({name, time});
+      }
+      // Sort by time ascending
+      entries.sort((a,b)=>parseFloat(a.time.replace(':','.')) - parseFloat(b.time.replace(':','.')));
+      // Remove old entries
+      while(leaderboardGrid.children.length > 2){ leaderboardGrid.removeChild(leaderboardGrid.lastChild); }
+      // Re-add sorted entries
+      entries.forEach(entry => {
+        const nameDiv = document.createElement('div');
+        const timeDiv = document.createElement('div');
+        nameDiv.textContent = entry.name;
+        timeDiv.textContent = entry.time;
+        leaderboardGrid.appendChild(nameDiv);
+        leaderboardGrid.appendChild(timeDiv);
+      });
+    }
+
+    function formatTime(ms) {
+      const totalSeconds = ms / 1000;
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = Math.floor(totalSeconds % 60);
+      const hundredths = Math.floor((ms % 1000) / 10);
+      return `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}.${String(hundredths).padStart(2,'0')}`;
+    }
+  </script>
+</body>
+</html>
