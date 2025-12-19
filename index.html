@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pump Track Timer</title>
 
 <style>
@@ -14,18 +14,24 @@
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  background: #1e1f22;
-  color: #f2f2f2;
+  background: #1c1d20;
+  color: #f1f1f1;
   height: 100vh;
   overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+
+body.light {
+  background: #f4f4f4;
+  color: #1c1d20;
 }
 
 .screen {
   position: absolute;
   inset: 0;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
   opacity: 0;
   pointer-events: none;
   transform: scale(1.05);
@@ -41,16 +47,21 @@ body {
 h1 {
   text-align: center;
   font-weight: 600;
+  margin-bottom: 1rem;
 }
 
 button {
-  background: #2b2d31;
-  color: #f2f2f2;
+  background: #2a2c30;
+  color: inherit;
   border: none;
   border-radius: 6px;
   padding: 1.2rem;
   font-size: 1.3rem;
   font-weight: 600;
+}
+
+body.light button {
+  background: #e0e0e0;
 }
 
 button:active {
@@ -64,15 +75,15 @@ button:active {
   gap: 1rem;
 }
 
-.small-btn {
-  padding: 0.7rem;
+.small {
   font-size: 1rem;
+  padding: 0.7rem;
 }
 
 .back {
   position: absolute;
-  top: 0.75rem;
-  left: 0.75rem;
+  top: 0.7rem;
+  left: 0.7rem;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -91,7 +102,7 @@ button:active {
   font-size: 4.5rem;
 }
 
-.big-text {
+.big {
   font-size: 3.5rem;
   font-weight: 700;
 }
@@ -103,7 +114,6 @@ button:active {
 
 .leaderboard {
   overflow-y: auto;
-  margin-top: 1rem;
 }
 
 .row {
@@ -114,9 +124,38 @@ button:active {
 }
 
 .row div {
-  background: #2b2d31;
+  background: #2a2c30;
   padding: 0.6rem;
   border-radius: 4px;
+}
+
+body.light .row div {
+  background: #e0e0e0;
+}
+
+/* Toggle */
+.toggle {
+  width: 60px;
+  height: 28px;
+  background: #555;
+  border-radius: 14px;
+  position: relative;
+  cursor: pointer;
+}
+
+.knob {
+  width: 24px;
+  height: 24px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: 0.3s;
+}
+
+.toggle.on .knob {
+  left: 34px;
 }
 </style>
 </head>
@@ -129,7 +168,7 @@ button:active {
   <div class="main-buttons">
     <button onclick="startSession()">⏱ Start Session</button>
     <button onclick="openScreen('leaderboard')">Leaderboard</button>
-    <button onclick="openScreen('settings')" class="small-btn">⚙ Settings</button>
+    <button onclick="openScreen('settings')" class="small">⚙ Settings</button>
   </div>
 </div>
 
@@ -137,7 +176,7 @@ button:active {
 <div class="screen" id="session">
   <button class="back" onclick="goHome()">←</button>
   <div class="center" id="sessionText">
-    <div class="big-text">Waiting for rider</div>
+    <div class="big">Waiting for rider</div>
   </div>
   <div class="center timer" id="timer" style="display:none">00:00.00</div>
   <div class="bottom" id="sessionButtons" style="display:none">
@@ -157,8 +196,14 @@ button:active {
 <div class="screen" id="settings">
   <button class="back" onclick="goHome()">←</button>
   <h1>Settings</h1>
-  <p style="text-align:center">
-    Ultrasonic Distance: <span id="dist">50</span>cm
+
+  <p>Dark mode</p>
+  <div class="toggle" id="darkToggle" onclick="toggleDark()">
+    <div class="knob"></div>
+  </div>
+
+  <p style="margin-top:1.5rem">
+    Ultrasonic Distance: <strong><span id="dist">50</span> cm</strong>
   </p>
   <input type="range" min="20" max="200" step="10" value="50"
     oninput="document.getElementById('dist').textContent=this.value">
@@ -169,6 +214,7 @@ let leaderboard = [];
 let timerInterval;
 let startTime;
 let finalTime;
+let dark = true;
 
 function openScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -182,12 +228,12 @@ function goHome() {
 
 function startSession() {
   openScreen('session');
-  document.getElementById('sessionText').innerHTML = '<div class="big-text">Waiting for rider</div>';
+  document.getElementById('sessionText').innerHTML = '<div class="big">Waiting for rider</div>';
   document.getElementById('timer').style.display = 'none';
   document.getElementById('sessionButtons').style.display = 'none';
 
   setTimeout(() => {
-    document.getElementById('sessionText').innerHTML = '<div class="big-text">LAP STARTED</div>';
+    document.getElementById('sessionText').innerHTML = '<div class="big">LAP STARTED</div>';
     startTime = Date.now();
 
     timerInterval = setInterval(() => {
@@ -196,15 +242,14 @@ function startSession() {
       document.getElementById('timer').textContent = format(ms);
     }, 50);
 
-    const stopAfter = 6000 + Math.random() * 4000;
-    setTimeout(stopTimer, stopAfter);
+    setTimeout(stopTimer, 7000 + Math.random() * 3000);
   }, 3000);
 }
 
 function stopTimer() {
   clearInterval(timerInterval);
   finalTime = Date.now() - startTime;
-  document.getElementById('sessionText').innerHTML = '<div class="big-text">Final Time</div>';
+  document.getElementById('sessionText').innerHTML = '<div class="big">Final Time</div>';
   document.getElementById('sessionButtons').style.display = 'flex';
 }
 
@@ -238,6 +283,12 @@ function renderBoard() {
         <div>${format(e.time)}</div>
       </div>`;
   });
+}
+
+function toggleDark() {
+  dark = !dark;
+  document.body.classList.toggle('light', !dark);
+  document.getElementById('darkToggle').classList.toggle('on', !dark);
 }
 </script>
 
